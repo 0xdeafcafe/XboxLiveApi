@@ -45,7 +45,7 @@ app.post('/windowslive/authentication/create', function (req, res) {
 							var index = browser.url.indexOf('access_token');
 							if (index != -1) {
 								var data = browser.url.substring(index);
-								res.json(querystring.parse(data));
+								res.json({ result: querystring.parse(data), error: null });
 								browser.close();
 							} else {
 								res.json({ result: null, error: { error_description: "Either the two factor authenication code is invalid/has expired, or unable to authenitcate with Windows Live." } })
@@ -58,7 +58,7 @@ app.post('/windowslive/authentication/create', function (req, res) {
 					var index = browser.url.indexOf('access_token');
 					if (index != -1) {
 						var data = browser.url.substring(index);
-						res.json(querystring.parse(data));
+						res.json({ result: querystring.parse(data), error: null });
 						browser.close();
 					} else {
 						res.json({ result: null, error: { error_description: "Unable to authenticate with Windows Live." } })
