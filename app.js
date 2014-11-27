@@ -5,6 +5,9 @@ var querystring = require("querystring");
 var app = express();
 
 app.use(bodyParser());
+app.get('/', function (req, res) {
+	res.json({ "urm...": "you're in the wrong part of the right place." });
+});
 app.post('/windowslive/authentication/create', function (req, res) {
 	if (req.body == undefined) {
 		res.json({ result: null, error: { error_description: "No account information" } });
