@@ -6,17 +6,13 @@
 	"version": "1.0.0-*",
 	"dependencies": {
 		"XboxLiveApi": "1.0.0-*",
+		"System.Console": "4.0.0-beta-22231",
 		"Microsoft.Framework.ConfigurationModel.Json": "1.0.0-beta1"
 	},
 	"commands": {
 		"run": "run"
 	},
 	"frameworks": {
-		"aspnet50": { },
-		"aspnetcore50": {
-			"dependencies": {
-				"System.Console": "4.0.0-beta-22231"
-			}
-		}
+		"aspnet50": { }
 	}
 }
