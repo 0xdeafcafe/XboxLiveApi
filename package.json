@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "express": "4.10.4",
+    "zombie": "2.0.8",
+    "body-parser": "1.9.3",
+    "querystring": "0.2.0"
+  }
+}
