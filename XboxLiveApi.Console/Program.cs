@@ -85,7 +85,8 @@ namespace XboxLiveApi.Console
 					await RefreshTokens();
 					var settings = GetSettings();
 
-					await Xuid.Test(settings.Token, settings.UserHeaderSession);
+					var xuid = args.Length > 1 ? args[1] : settings.XboxUserId.ToString();
+					await Xuid.Summary(settings.Token, settings.UserHeaderSession, xuid);
 
 					validInput = true;
 					break;
@@ -185,11 +186,11 @@ namespace XboxLiveApi.Console
 				var windowsLiveRefresh = await Authentication.RefreshWindowsLiveAuthenicationAsync(settings.RefreshToken);
 				WriteLine("Done");
 
-				WriteLine("Updating Authentication with Xbox Live... ");
+				Write("Updating Authentication with Xbox Live... ");
 				var xboxLiveAuthentication = await Authentication.AuthenticateXboxLiveAsync(windowsLiveRefresh.AccessToken);
 				WriteLine("Done");
 
-				WriteLine("Updating Authorization with Xbox Live... ");
+				Write("Updating Authorization with Xbox Live... ");
 				var xboxLiveAuthorization = await Authentication.AuthorizeXboxLiveAsync(xboxLiveAuthentication.Token);
 				WriteLine("Done");
 
