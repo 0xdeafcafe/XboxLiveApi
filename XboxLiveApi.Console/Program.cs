@@ -194,7 +194,7 @@ namespace XboxLiveApi.Console
 
 		public void SetSettings(Settings settings)
 		{
-			File.WriteAllText(SettingsPath, JsonConvert.SerializeObject(settings));
+			File.WriteAllText(SettingsPath, JsonConvert.SerializeObject(settings, Formatting.Indented));
 		}
 	}
 }
