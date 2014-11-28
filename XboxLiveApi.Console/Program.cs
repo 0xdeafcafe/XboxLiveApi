@@ -22,10 +22,16 @@ namespace XboxLiveApi.Console
 		public async Task MainAsync(string[] args)
 		{
 			// TODO: remove this
-			Write("[Debug] Enter Command: ");
-			args = new[] { ReadLine() };
+#if DEBUG
+			if (args == null || args.Length == 0)
+			{
+				Write("[Debug] Enter Command: ");
+				args = new[] { ReadLine() };
+			}
+#endif
 
 			var config = new Configuration();
+			config.AddJsonFile("config.json");
 			config.AddEnvironmentVariables();
 
 			// check args
@@ -59,7 +65,10 @@ namespace XboxLiveApi.Console
 			switch (args[0].ToLowerInvariant())
 			{
 				case "login":
-					await Login();
+					string windowsLiveAuthenticationServer = null;
+					if (!config.TryGet("windows_live_authentication_server", out windowsLiveAuthenticationServer))
+						windowsLiveAuthenticationServer = "http://xdc-wl-auth-api.herokuapp.com/windowslive/authentication/create";
+					await Login(windowsLiveAuthenticationServer);
 
 					validInput = true;
 					break;
@@ -92,7 +101,7 @@ namespace XboxLiveApi.Console
 #endif
 		}
 
-		public async Task Login()
+		public async Task Login(string windowsLiveAuthServer)
 		{
 			// get identity
 			Write("Microsoft Account Email Address: ");
@@ -126,14 +135,17 @@ namespace XboxLiveApi.Console
 			Write("Microsoft Account Two Factor Code (Optional): ");
 			var identityTwoFactorCode = ReadLine();
 
-			var windowsLiveAuthentication = await Authentication.AuthenticateWindowsLiveAsync(identity, identityPassword, identityTwoFactorCode);
-			WriteLine("Successful authentication with Windows Live...");
+			Write("Authenticating with Windows Live... ");
+			var windowsLiveAuthentication = await Authentication.AuthenticateWindowsLiveAsync(windowsLiveAuthServer, identity, identityPassword, identityTwoFactorCode);
+			WriteLine("Done");
 
+			Write("Authenticating with Xbox Live... ");
 			var xboxLiveAuthentication = await Authentication.AuthenticateXboxLiveAsync(windowsLiveAuthentication.AccessToken);
-			WriteLine("Successful authentication with Xbox Live...");
+			WriteLine("Done");
 
+			Write("Authorizing with Xbox Live... ");
 			var xboxLiveAuthorization = await Authentication.AuthorizeXboxLiveAsync(xboxLiveAuthentication.Token);
-			WriteLine("Successful authorization with Xbox Live...");
+			WriteLine("Done");
 
 			var settings = GetSettings();
 			settings.AccessToken = windowsLiveAuthentication.AccessToken;
@@ -143,7 +155,7 @@ namespace XboxLiveApi.Console
 			settings.Token = xboxLiveAuthorization.Token;
 			settings.AgeGate = xboxLiveAuthorization.DisplayClaims.Xui[0].AgeGate;
 			settings.Gamertag = xboxLiveAuthorization.DisplayClaims.Xui[0].Gamertag;
-			settings.UserHeaderSession = xboxLiveAuthorization.DisplayClaims.Xui[0].Uhs;
+			settings.UserHeaderSession = xboxLiveAuthorization.DisplayClaims.Xui[0].UserHeaderSession;
 			SetSettings(settings);
 
 			WriteLine();
@@ -169,8 +181,28 @@ namespace XboxLiveApi.Console
 			var settings = GetSettings();
 			if (settings.ExpiresAt < DateTime.UtcNow || force)
 			{
-				// do it
-				var response = await Authentication.RefreshWindowsLiveAuthenicationAsync(settings.RefreshToken);
+				Write("Refreshing Windows Live Access Token... ");
+				var windowsLiveRefresh = await Authentication.RefreshWindowsLiveAuthenicationAsync(settings.RefreshToken);
+				WriteLine("Done");
+
+				WriteLine("Updating Authentication with Xbox Live... ");
+				var xboxLiveAuthentication = await Authentication.AuthenticateXboxLiveAsync(windowsLiveRefresh.AccessToken);
+				WriteLine("Done");
+
+				WriteLine("Updating Authorization with Xbox Live... ");
+				var xboxLiveAuthorization = await Authentication.AuthorizeXboxLiveAsync(xboxLiveAuthentication.Token);
+				WriteLine("Done");
+
+				settings.AccessToken = windowsLiveRefresh.AccessToken;
+				settings.AgeGate = xboxLiveAuthorization.DisplayClaims.Xui[0].AgeGate;
+				settings.ExpiresAt = DateTime.UtcNow.AddSeconds(windowsLiveRefresh.ExpiresIn - 20);
+				settings.Gamertag = xboxLiveAuthorization.DisplayClaims.Xui[0].Gamertag;
+				settings.RefreshToken = windowsLiveRefresh.RefreshToken;
+				settings.Token = xboxLiveAuthorization.Token;
+				settings.UserHeaderSession = xboxLiveAuthorization.DisplayClaims.Xui[0].UserHeaderSession;
+				settings.XboxUserId = xboxLiveAuthorization.DisplayClaims.Xui[0].XboxUserId;
+
+				SetSettings(settings);
 			}
 		}
 
