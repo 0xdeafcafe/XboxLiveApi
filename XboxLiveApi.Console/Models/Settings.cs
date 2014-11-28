@@ -10,13 +10,19 @@ namespace XboxLiveApi.Console.Models
 
 		public DateTime ExpiresAt { get; set; }
 
-		public string Scope { get; set; }
+		public string Token { get; set; }
 
-		public long UserId { get; set; }
+		public string UserHeaderSession { get; set; }
 
-		public bool HasExpired()
+		public long XboxUserId { get; set; }
+
+		public string Gamertag { get; set; }
+
+		public string AgeGate { get; set; }
+
+		public bool SettingsAreValid()
 		{
-			return ExpiresAt < DateTime.UtcNow;
+			return (AccessToken != null && RefreshToken != null && Token != null && Gamertag != null && UserHeaderSession != null);
 		}
 	}
 }
