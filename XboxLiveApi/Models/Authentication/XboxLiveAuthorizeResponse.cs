@@ -38,9 +38,9 @@ namespace XboxLiveApi.Models.Authentication
 		public long XboxUserId { get; set; }
 
 		/// <summary>
-		/// No fucking clue here (unknown2)
+		/// Unique Session based Id used to authenticate requests made to Xbox Live
 		/// </summary>
 		[JsonProperty("uhs")]
-		public string Uhs { get; set; }
+		public string UserHeaderSession { get; set; }
 	}
 }

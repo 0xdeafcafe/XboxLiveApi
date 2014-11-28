@@ -13,14 +13,15 @@ namespace XboxLiveApi.Endpoints
 		/// <summary>
 		/// Authenticates a Microsoft Account Identity with Windows Live
 		/// </summary>
+		/// <param name="windowsLiveAuthenticationServer">The URL of the custom Windows Live Authentication Server</param>
 		/// <param name="identity">The email address of the Microsoft Account</param>
 		/// <param name="identityPassword">The password of the Microsoft Account</param>
 		/// <param name="identityTwoFactorCode">If the Microsoft Account has two factor authentication, put the code from the authenticator app here.</param>
-		public static async Task<WindowsLiveAuthenticateResponse> AuthenticateWindowsLiveAsync(string identity, string identityPassword, string identityTwoFactorCode = null)
+		public static async Task<WindowsLiveAuthenticateResponse> AuthenticateWindowsLiveAsync(string windowsLiveAuthenticationServer, string identity, string identityPassword, string identityTwoFactorCode = null)
 		{
 			// Call remote api to get tokens
 			var httpClient = new HttpClient();
-			var response = await httpClient.PostAsync("http://xdc-wl-auth-api.herokuapp.com/windowslive/authentication/create",
+			var response = await httpClient.PostAsync(windowsLiveAuthenticationServer,
 				new StringContent(JsonConvert.SerializeObject(new WindowsLiveRequest
 				{
 					Identity = identity,
@@ -37,9 +38,9 @@ namespace XboxLiveApi.Endpoints
 			{
 				parsedResponse = JsonConvert.DeserializeObject<WindowsLiveResponse<WindowsLiveAuthenticateResponse>>(stringResponse);
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
-				throw new FriendlyException("Invalid response from Windows Live Authentication Server");
+				throw new FriendlyException("Invalid response from Windows Live Authentication Server", ex);
 			}
 
 			if (parsedResponse.Error != null)
@@ -55,29 +56,30 @@ namespace XboxLiveApi.Endpoints
 		/// 
 		/// </summary>
 		/// <param name="refreshToken"></param>
-		/// <returns></returns>
-		public static async Task<WindowsLiveAuthenticateResponse> RefreshWindowsLiveAuthenicationAsync(string refreshToken)
+		public static async Task<WindowsLiveRefreshResponse> RefreshWindowsLiveAuthenicationAsync(string refreshToken)
 		{
 			var httpClient = new HttpClient();
 			var response = await httpClient.PostAsync("https://login.live.com/oauth20_token.srf",
 				new StringContent(
-					string.Format("client_id=0000000048093EE3&redirect_uri=https://login.live.com/oauth20_desktop.srf&grant_type=refresh_token&scope=service::user.auth.xboxlive.com::MBI_SSL&refresh_token=1", refreshToken), 
+					string.Format("client_id=0000000048093EE3&redirect_uri=https://login.live.com/oauth20_desktop.srf&grant_type=refresh_token&scope=service::user.auth.xboxlive.com::MBI_SSL&refresh_token={0}", refreshToken), 
 					Encoding.UTF8, "application/x-www-form-urlencoded")
 				);
 
 			var stringResponse = await response.Content.ReadAsStringAsync();
-
-			if (response.IsSuccessStatusCode)
+			WindowsLiveRefreshResponse parsedResponse = null;
+			try
 			{
-
+				parsedResponse = JsonConvert.DeserializeObject<WindowsLiveRefreshResponse>(stringResponse);
+			}
+			catch (Exception ex)
+			{
+				throw new FriendlyException("Invalid response from the Windows Live Authentication Server.", ex);
 			}
 
+			if (parsedResponse.Error != null)
+				throw new FriendlyException(parsedResponse.ErrorDescription);
 
-			//if (!response.IsSuccessStatusCode)
-			//	throw new FriendlyException("Invalid HTTP response from the Windows Live Authentication Server");
-
-
-			return null;
+			return parsedResponse;
 		}
 
 		/// <summary>
@@ -110,9 +112,9 @@ namespace XboxLiveApi.Endpoints
 			{
 				parsedResponse = JsonConvert.DeserializeObject<XboxLiveResponse<XboxLiveAuthenticateResponse>>(stringResponse);
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
-				throw new FriendlyException("Invalid response from Xbox Live Authentication Server");
+				throw new FriendlyException("Invalid response from Xbox Live Authentication Server", ex);
 			}
 
 			if (parsedResponse.Token == null)
@@ -153,9 +155,9 @@ namespace XboxLiveApi.Endpoints
 			{
 				parsedResponse = JsonConvert.DeserializeObject<XboxLiveResponse<XboxLiveAuthorizeResponse>>(stringResponse);
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
-				throw new FriendlyException("Invalid response from Xbox Live Authorization Server");
+				throw new FriendlyException("Invalid response from Xbox Live Authorization Server", ex);
 			}
 
 			if (parsedResponse.Token == null)
